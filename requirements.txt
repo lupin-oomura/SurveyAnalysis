@@ -1,0 +1,12 @@
+pandas
+openpyxl
+mecab-python3
+wordcloud
+matplotlib
+openai
+python-dotenv
+pyarrow
+scikit-learn
+jaconv
+flask
+flask-socketio

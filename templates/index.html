@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アンケート結果</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background: linear-gradient(135deg, #a9c9a4, #dfe7d9);
+            color: #333;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(45deg, #333, #555);
+            color: white;
+            padding: 30px 20px;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 2;
+            transition: width 0.3s ease;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffcc00;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .sidebar ul li {
+            margin: 15px 0;
+            cursor: pointer;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .sidebar ul li:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+		.sidebar ul li.active {
+		    background-color: #ffcc00;
+		    color: #333;
+		}
+
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+            background-color: #fff;
+            overflow-y: auto;
+            border-top-left-radius: 20px;
+            border-bottom-left-radius: 20px;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .main-content h1 {
+            color: #555;
+            font-size: 24px;
+            text-align: center;
+            margin-top: 40px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .question {
+            color: #999999;
+            font-size: 24px;
+            margin: 30px 0;
+            text-align: left;
+            font-weight: bold;
+            padding: 0;
+            background-color: transparent;
+            box-shadow: none;
+        }
+
+        .cluster {
+            margin-bottom: 50px;
+            padding: 20px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f7f7f7, #e1e1e1);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .cluster:hover {
+            transform: translateY(-10px);
+        }
+
+        .cluster h3 {
+            color: #222;
+            font-size: 22px;
+            margin-bottom: 15px;
+            border-bottom: 3px solid #ffcc00;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .cluster p {
+            color: #555;
+            line-height: 1.8;
+            margin: 10px 0;
+        }
+
+        .section-title {
+            font-size: 18px !important;
+            font-weight: bold !important;
+            color: #005555 !important;
+            margin-top: 20px !important;
+            padding-bottom: 5px !important;
+        }
+
+        .score {
+            font-weight: bold;
+            color: #ff8800;
+            font-size: 20px;
+        }
+
+        .suggestion {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(255, 204, 0, 0.1);
+            border-left: 5px solid #ffcc00;
+            font-style: italic;
+            color: #444;
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.5s forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .wordcloud-section {
+            margin-top: 50px;
+            text-align: center;
+        }
+
+        .wordcloud-image {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .questionnaire-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .questionnaire-table th, .questionnaire-table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .questionnaire-table th {
+            background-color: #f2f2f2;
+        }
+
+
+
+
+
+        /* データ取込みボタン用のスタイル */
+        #import-data-btn {
+            margin-top: 20px;
+            background-color: #00ffcc;
+            color: #333;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+        }
+
+        #import-data-btn:hover {
+            background-color: #e0b800;
+        }
+
+        /* モーダルダイアログ用のスタイル */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 8px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        #file-drop-zone {
+            border: 2px dashed #ccc;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        #file-drop-zone:hover {
+            border-color: #aaa;
+        }
+
+
+        /* クルクル回るアニメーションのスタイル */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #333;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ウェイティングダイアログ用のスタイル */
+        #waiting-dialog {
+            display: none;
+            text-align: center;
+        }
+        
+
+    </style>
+</head>
+<body>
+
+
+<div class="sidebar">
+    <h2>アンケート結果</h2>
+    <ul id="question-list">
+        <li onclick="showQuestionnaire()">質問票</li>
+        <li onclick="showResults('Q2')">Q2</li>
+        <li onclick="showResults('Q3')">Q3</li>
+
+    </ul>
+    <hr>
+    <button id="import-data-btn">データ取込み</button>    
+    <p id="waiting-message2">　</p>
+</div>
+
+
+
+
+
+<div id="importModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="file-drop-zone">ファイルをここにドラッグ＆ドロップしてください</div>
+        <button id="start-import-btn">データ取込み開始</button>
+    </div>
+</div>
+
+<div id="waiting-dialog" class="modal">
+    <div class="modal-content">
+        <div class="spinner"></div>
+        <p id="waiting-message">ただいま分析中です。しばらくお待ちください。</p>
+    </div>
+</div>
+
+<div id="completion-dialog" class="modal">
+    <div class="modal-content">
+        <p>分析が完了しました。リロードしてください。</p>
+        <button onclick="location.reload()">リロード</button>
+    </div>
+</div>
+
+
+
+
+
+
+<div class="main-content" id="main-content">
+    <!-- 初期表示の質問票表 -->
+    <div id="questionnaire">
+        <table class="questionnaire-table">
+            <thead>
+                <tr>
+                    <th>qid</th>
+                    <th>質問</th>
+                    <th>質問種類</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Q1</td><td>Id</td><td>属性</td></tr>
+                <tr><td>Q2</td><td>研修を受けた率直な感想を教えてください</td><td>FA</td></tr>
+                <tr><td>Q3</td><td>改善すべき点があれば、教えてください</td><td>FA</td></tr>
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+<script>
+    const questions = {
+"Q2":"研修を受けた率直な感想を教えてください",
+"Q3":"改善すべき点があれば、教えてください",
+
+    };
+
+    const data = 
+{
+    "Q2": [
+        {
+            "title": "実践的で役立つケーススタディ",
+            "score": 2.88,
+            "representative_comments": [
+                "とても実践的で、役立つと感じました。",
+                "理解しやすく、実践的でした。",
+                "具体的なケーススタディが良かったです。",
+                "とても良い経験になりました。",
+                "具体的なケーススタディが良かったです。"
+            ],
+            "suggestions": []
+        },
+        {
+            "title": "難易度が高く、理論的",
+            "score": 3.0,
+            "representative_comments": [
+                "少し難易度が高かったです。",
+                "少し理論的すぎたかもしれません。",
+                "内容が少し重複しているように感じました。",
+                "少し理論的すぎたかもしれません。",
+                "少し内容が多すぎたように感じました。"
+            ],
+            "suggestions": []
+        },
+        {
+            "title": "分かりやすくて役立つ内容",
+            "score": 3.29,
+            "representative_comments": [
+                "分かりやすくて良かったです。",
+                "説明が丁寧で、わかりやすかったです。",
+                "内容が分かりやすく、役立ちました。",
+                "役立つ内容で満足しています。",
+                "分かりやすくて良かったです。"
+            ],
+            "suggestions": []
+        },
+        {
+            "title": "非常に分かりやすく、満足のいく知識",
+            "score": 3.0,
+            "representative_comments": [
+                "非常に分かりやすく、満足です。",
+                "非常にためになりました。",
+                "役立つ知識が多く、満足です。",
+                "非常に分かりやすく、満足です。",
+                "非常に分かりやすく、満足です。"
+            ],
+            "suggestions": []
+        },
+        {
+            "title": "新しい知識の獲得",
+            "score": 3.0,
+            "representative_comments": [
+                "新しい知識を得ることができました。",
+                "新しい知識を得ることができました。"
+            ],
+            "suggestions": []
+        },
+        {
+            "title": "期待通りの内容",
+            "score": 2.5,
+            "representative_comments": [
+                "期待通りの内容でした。",
+                "期待通りの内容でした。"
+            ],
+            "suggestions": []
+        },
+        {
+            "title": "資料不足とインタラクティブ性の欠如",
+            "score": 2.33,
+            "representative_comments": [
+                "もう少し資料があれば良かったです。",
+                "もう少し資料があれば良かったです。",
+                "もう少しインタラクティブな部分が欲しかったです。"
+            ],
+            "suggestions": []
+        },
+        {
+            "title": "研修の長さと難易度",
+            "score": 2.8,
+            "representative_comments": [
+                "研修時間が長く、少し疲れました。",
+                "非常に良い研修でした。",
+                "良い研修でしたが、少し難しかったです。",
+                "研修内容が豊富で満足しました。",
+                "研修時間が長く、少し疲れました。"
+            ],
+            "suggestions": []
+        }
+    ],
+    "Q3": [
+        {
+            "title": "さらなる深掘りと実践強化の要望",
+            "score": 3.25,
+            "representative_comments": [
+                "もっと深い知識を提供してほしいです。",
+                "インタラクティブな要素を増やして欲しいです。",
+                "演習の時間をもっと増やして欲しいです。",
+                "実践的な演習をもっと増やして欲しいです。",
+                "実践的な演習をもっと増やして欲しいです。"
+            ],
+            "suggestions": [
+                "より専門的なトピックや高度な知識を含むコンテンツを追加する。",
+                "インタラクティブなクイズやディスカッションセッションを追加し、参加者が積極的に参加できるようにする。",
+                "演習セッションの時間を増やし、実践的なシナリオを含む練習問題を提供する。"
+            ]
+        },
+        {
+            "title": "研修内容の調整と改善要望",
+            "score": 3.0,
+            "representative_comments": [
+                "時間配分を少し見直して欲しいです。",
+                "もう少しフォローアップがあると嬉しいです。",
+                "質問時間を増やして欲しいです。",
+                "もう少し分かりやすい説明があると良かったです。",
+                "少し難しい部分がありました。"
+            ],
+            "suggestions": [
+                "研修の時間配分を見直し、各セッションの的確な時間を確保する。",
+                "内容をより簡潔に整理し、重要ポイントをスライドや資料に強調して示す。",
+                "各セッションの後に質問タイムを設け、参加者の疑問にしっかりと答えるフォローアップを強化する。"
+            ]
+        },
+        {
+            "title": "特に改善点なし",
+            "score": 2.75,
+            "representative_comments": [
+                "改善点は特にないです。",
+                "特に大きな改善点はないです。",
+                "特に改善点はありません。",
+                "特にありません。",
+                "特にないです。"
+            ],
+            "suggestions": [
+                "現在の良い点を維持しつつ、常に参加者のフィードバックを収集し、小さな改善を継続的に行う。",
+                "参加者が特に満足している点を強化・広めることで、満足度をさらに高める。",
+                "更に多くの参加者が満足するように他の部分も同じレベルの質を保つよう努める。"
+            ]
+        }
+    ]
+}
+    ;
+
+function setActiveButton(button) {
+    const buttons = document.querySelectorAll('.sidebar ul li');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    button.classList.add('active');
+}
+
+function showResults(questionId) {
+    setActiveButton(event.target);  // ボタンをアクティブに設定
+    // ここから下は既存のshowResults関数のコードをそのまま
+    const clusters = data[questionId];
+    const contentDiv = document.getElementById("main-content");
+    contentDiv.innerHTML = '';
+
+    const questionDiv = document.createElement("div");
+    questionDiv.className = "question";
+    questionDiv.textContent = questions[questionId];
+    contentDiv.appendChild(questionDiv);
+
+    clusters.forEach((cluster, index) => {
+        const clusterDiv = document.createElement("div");
+        clusterDiv.className = "cluster fade-in";
+        clusterDiv.style.animationDelay = `${index * 0.1}s`;
+
+        const title = document.createElement("h3");
+        title.textContent = `${cluster.title}  (score=${cluster.score.toFixed(1)})`;
+        clusterDiv.appendChild(title);
+
+        const commentsTitle = document.createElement("p");
+        commentsTitle.className = "section-title";
+        commentsTitle.textContent = "代表的なコメント:";
+        clusterDiv.appendChild(commentsTitle);
+
+        cluster.representative_comments.forEach(comment => {
+            const commentP = document.createElement("p");
+            commentP.textContent = `- ${comment}`;
+            clusterDiv.appendChild(commentP);
+        });
+
+        const suggestionsTitle = document.createElement("p");
+        suggestionsTitle.className = "section-title";
+        suggestionsTitle.textContent = "示唆:";
+        clusterDiv.appendChild(suggestionsTitle);
+
+        cluster.suggestions.forEach(suggestion => {
+            const suggestionP = document.createElement("p");
+            suggestionP.className = "suggestion";
+            suggestionP.textContent = `- ${suggestion}`;
+            clusterDiv.appendChild(suggestionP);
+        });
+
+        contentDiv.appendChild(clusterDiv);
+    });
+
+    // Word Cloudセクションを追加
+    const wordCloudDiv = document.createElement("div");
+    wordCloudDiv.className = "wordcloud-section";
+
+    const wordCloudTitle = document.createElement("h3");
+    wordCloudTitle.textContent = "Word Cloud";
+    wordCloudTitle.className = "section-title";
+    wordCloudDiv.appendChild(wordCloudTitle);
+
+    const wordCloudImage = document.createElement("img");
+    wordCloudImage.src = `/static/wordcloud_${questionId}.png`; // /static/ を追加
+    wordCloudImage.alt = "Word Cloud";
+    wordCloudImage.className = "wordcloud-image";
+    wordCloudDiv.appendChild(wordCloudImage);
+
+
+
+    contentDiv.appendChild(wordCloudDiv);
+}
+
+function showQuestionnaire() {
+    const button = document.querySelector("li[onclick='showQuestionnaire()']");
+    setActiveButton(button);  // ボタンをアクティブに設定
+    const contentDiv = document.getElementById("main-content");
+    const questionnaireHTML = `
+        <table class="questionnaire-table">
+            <thead>
+                <tr>
+                    <th>qid</th>
+                    <th>質問</th>
+                    <th>質問種類</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Q1</td><td>Id</td><td>属性</td></tr>
+                <tr><td>Q2</td><td>研修を受けた率直な感想を教えてください</td><td>FA</td></tr>
+                <tr><td>Q3</td><td>改善すべき点があれば、教えてください</td><td>FA</td></tr>
+
+            </tbody>
+        </table>
+    `;
+    contentDiv.innerHTML = questionnaireHTML;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+// クライアント側: 固有の識別子を生成
+const sessionId = "{{ session_id }}";  // サーバーから受け取ったセッションIDを使用
+let selectedFile = null;
+const socket = io();
+
+document.getElementById('import-data-btn').onclick = function() {
+    document.getElementById('importModal').style.display = 'block';
+};
+
+document.querySelector('.modal .close').onclick = function() {
+    document.getElementById('importModal').style.display = 'none';
+};
+// document.getElementsByClassName('close')[0].onclick = function() {
+//     document.getElementById('importModal').style.display = 'none';
+// };
+
+// window.onclick = function(event) {
+//     const modals = document.querySelectorAll('.modal');
+//     modals.forEach(modal => {
+//         if (event.target == modal) {
+//             modal.style.display = 'none';
+//         }
+//     });
+// };
+// window.onclick = function(event) {
+//     if (event.target == document.getElementById('importModal')) {
+//         document.getElementById('importModal').style.display = 'none';
+//     }
+// };
+
+
+document.getElementById('file-drop-zone').ondrop = function(event) {
+    event.preventDefault();
+    selectedFile = event.dataTransfer.files[0]; // ファイルを保持
+    document.getElementById('file-drop-zone').textContent = `${selectedFile.name}`;
+};
+
+document.getElementById('file-drop-zone').ondragover = function(event) {
+    event.preventDefault();
+};
+
+document.getElementById('start-import-btn').onclick = function() {
+    if (selectedFile) {
+        uploadFile(selectedFile); // 実行ボタンが押されたときにPOST
+    } else {
+        alert('ファイルが選択されていません。');
+    }
+};
+
+function uploadFile(file) {
+    document.getElementById('importModal').style.display = 'none';
+    document.getElementById('waiting-dialog').style.display = 'block';
+
+    let formData = new FormData();
+    formData.append('file', file);
+    formData.append('sessionId', sessionId); // セッションIDを追加
+
+    fetch('/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            // エラーの場合
+            return response.text().then(text => { throw new Error(text); });
+        }
+        return response.text();
+    })
+    .then(result => {
+        // 成功時の処理
+        console.log(result);
+        document.getElementById('import-data-btn').disabled = true;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // エラーメッセージを表示してダイアログを閉じる
+        alert(`エラー: ${error.message}`);
+        document.getElementById('waiting-dialog').style.display = 'none';
+        document.getElementById('importModal').style.display = 'block';
+    });
+}
+
+// WebSocketでサーバーからの進行状況を受け取る
+socket.on('progress', function(data) {
+    if (data.sessionId === sessionId) {  // セッションIDを確認
+        document.getElementById('waiting-message').textContent = `進行状況: ${data.progress}`;
+        document.getElementById('waiting-message2').textContent = `進行状況: ${data.progress}`;
+    }
+});
+
+socket.on('done', function(data) {
+    if (data.sessionId === sessionId) {  // セッションIDを確認
+        document.getElementById('waiting-dialog').style.display = 'none';
+        document.getElementById('completion-dialog').style.display = 'block';
+        console.log(data.message);
+    }
+});
+
+
+
+
+
+
+
+window.onload = showQuestionnaire;
+
+
+</script>
+
+</body>
+</html>
